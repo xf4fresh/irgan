@@ -10,7 +10,6 @@ import utils as ut
 from dis_model_pointwise_nn import DIS
 from gen_model_nn import GEN
 
-
 FEATURE_SIZE = 46
 HIDDEN_SIZE = 46
 BATCH_SIZE = 8
@@ -24,8 +23,7 @@ workdir = 'MQ2008-semi'
 DIS_TRAIN_FILE = workdir + '/run-train-gan.txt'
 GAN_MODEL_BEST_FILE = workdir + '/gan_best_nn.model'
 
-
-query_url_feature, query_url_index, query_index_url =\
+query_url_feature, query_url_index, query_index_url = \
     ut.load_all_query_url_feature(workdir + '/Large_norm.txt', FEATURE_SIZE)
 query_pos_train = ut.get_query_pos(workdir + '/train.txt')
 query_pos_test = ut.get_query_pos(workdir + '/test.txt')
@@ -145,7 +143,6 @@ def main():
                                         generator.reward: choose_reward,
                                         generator.important_sampling: choose_IS})
 
-
             p_5 = precision_at_k(sess, generator, query_pos_test, query_pos_train, query_url_feature, k=5)
             ndcg_5 = ndcg_at_k(sess, generator, query_pos_test, query_pos_train, query_url_feature, k=5)
 
@@ -160,11 +157,11 @@ def main():
                     generator.save_model(sess, GAN_MODEL_BEST_FILE)
                     print("Best:", "gen p@5 ", p_5, "gen ndcg@5 ", ndcg_5)
 
-
     sess.close()
     param_best = cPickle.load(open(GAN_MODEL_BEST_FILE))
     assert param_best is not None
-    generator_best = GEN(FEATURE_SIZE, HIDDEN_SIZE, WEIGHT_DECAY, G_LEARNING_RATE, temperature=TEMPERATURE, param=param_best)
+    generator_best = GEN(FEATURE_SIZE, HIDDEN_SIZE, WEIGHT_DECAY, G_LEARNING_RATE, temperature=TEMPERATURE,
+                         param=param_best)
     sess = tf.Session(config=config)
     sess.run(tf.initialize_all_variables())
 

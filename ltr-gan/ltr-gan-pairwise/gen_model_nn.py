@@ -10,9 +10,9 @@ class GEN:
         self.learning_rate = learning_rate
         self.g_params = []
 
-        self.reward = tf.placeholder(tf.float32, shape=[None,], name='reward')
+        self.reward = tf.placeholder(tf.float32, shape=[None, ], name='reward')
         self.pred_data = tf.placeholder(tf.float32, shape=[None, self.feature_size], name="pred_data")
-        self.sample_index = tf.placeholder(tf.int32, shape=[None,], name='sample_index')
+        self.sample_index = tf.placeholder(tf.int32, shape=[None, ], name='sample_index')
 
         with tf.variable_scope('generator'):
             if param == None:
@@ -31,7 +31,8 @@ class GEN:
 
         # Given batch query-url pairs, calculate the matching score
         # For all urls of one query
-        self.pred_score = tf.reshape(tf.matmul(tf.nn.tanh(tf.nn.xw_plus_b(self.pred_data, self.W_1, self.b)), self.W_2), [-1])
+        self.pred_score = tf.reshape(tf.matmul(tf.nn.tanh(tf.nn.xw_plus_b(self.pred_data, self.W_1, self.b)), self.W_2),
+                                     [-1])
 
         self.gan_prob = tf.gather(
             tf.reshape(tf.nn.softmax(tf.reshape(self.pred_score, [1, -1])), [-1]), self.sample_index)
@@ -42,7 +43,6 @@ class GEN:
 
         optimizer = tf.train.GradientDescentOptimizer(self.learning_rate)
         self.gan_updates = optimizer.minimize(self.gan_loss, var_list=self.g_params)
-
 
     def save_model(self, sess, filename):
         param = sess.run(self.g_params)

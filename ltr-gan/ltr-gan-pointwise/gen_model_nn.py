@@ -19,9 +19,9 @@ class GEN:
         with tf.variable_scope('generator'):
             if param == None:
                 self.W_1 = tf.get_variable('weight_1', [self.feature_size, self.hidden_size],
-                                         initializer=tf.truncated_normal_initializer(mean=0.0, stddev=0.1))
+                                           initializer=tf.truncated_normal_initializer(mean=0.0, stddev=0.1))
                 self.W_2 = tf.get_variable('weight_2', [self.hidden_size, 1],
-                                         initializer=tf.truncated_normal_initializer(mean=0.0, stddev=0.1))
+                                           initializer=tf.truncated_normal_initializer(mean=0.0, stddev=0.1))
                 self.b_1 = tf.get_variable('b_1', [self.hidden_size], initializer=tf.constant_initializer(0.0))
                 self.b_2 = tf.get_variable('b_2', [1], initializer=tf.constant_initializer(0.0))
             else:
@@ -37,7 +37,8 @@ class GEN:
         # Given batch query-url pairs, calculate the matching score
         # For all urls of one query
         self.pred_score = tf.reshape(tf.nn.xw_plus_b(
-            tf.nn.tanh(tf.nn.xw_plus_b(self.pred_data, self.W_1, self.b_1)), self.W_2, self.b_2), [-1]) / self.temperature
+            tf.nn.tanh(tf.nn.xw_plus_b(self.pred_data, self.W_1, self.b_1)), self.W_2, self.b_2),
+            [-1]) / self.temperature
 
         self.gan_prob = tf.gather(
             tf.reshape(tf.nn.softmax(tf.reshape(self.pred_score, [1, -1])), [-1]), self.sample_index)
@@ -48,7 +49,6 @@ class GEN:
 
         self.optimizer = tf.train.GradientDescentOptimizer(self.learning_rate)
         self.g_updates = self.optimizer.minimize(self.gan_loss, var_list=self.g_params)
-
 
     def save_model(self, sess, filename):
         param = sess.run(self.g_params)

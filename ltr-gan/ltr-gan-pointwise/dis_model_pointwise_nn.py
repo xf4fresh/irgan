@@ -16,9 +16,9 @@ class DIS():
         with tf.variable_scope('discriminator'):
             if param == None:
                 self.W_1 = tf.get_variable('weight_1', [self.feature_size, self.hidden_size],
-                                         initializer=tf.truncated_normal_initializer(mean=0.0, stddev=0.1))
+                                           initializer=tf.truncated_normal_initializer(mean=0.0, stddev=0.1))
                 self.W_2 = tf.get_variable('weight_2', [self.hidden_size, 1],
-                                         initializer=tf.truncated_normal_initializer(mean=0.0, stddev=0.1))
+                                           initializer=tf.truncated_normal_initializer(mean=0.0, stddev=0.1))
                 self.b_1 = tf.get_variable('b_1', [self.hidden_size], initializer=tf.constant_initializer(0.0))
                 self.b_2 = tf.get_variable('b_2', [1], initializer=tf.constant_initializer(0.0))
             else:
@@ -37,7 +37,7 @@ class DIS():
 
         # ranking log loss
         with tf.name_scope('log_loss'):
-            self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.pred_score, self.pred_data_label))\
+            self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.pred_score, self.pred_data_label)) \
                         + self.weight_decay * (tf.nn.l2_loss(self.W_1) + tf.nn.l2_loss(self.W_2)
                                                + tf.nn.l2_loss(self.b_1) + tf.nn.l2_loss(self.b_2))
 
@@ -46,7 +46,6 @@ class DIS():
         self.d_updates = self.optimizer.minimize(self.loss, var_list=self.d_params)
 
         self.reward = (tf.sigmoid(self.pred_score) - 0.5) * 2
-
 
     def save_model(self, sess, filename):
         param = sess.run(self.d_params)

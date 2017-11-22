@@ -9,7 +9,6 @@ from eval.mrr import MRR
 import utils as ut
 from dis_model_pairwise_nn import DIS
 
-
 FEATURE_SIZE = 46
 HIDDEN_SIZE = 46
 BATCH_SIZE = 8
@@ -87,7 +86,6 @@ def main():
                 ndcg_best_val = ndcg_5
                 discriminator.save_model(sess, RNS_MODEL_BEST_FILE)
                 print("Best: ", " p@5 ", p_5, "ndcg@5 ", ndcg_5)
-
 
     sess.close()
     param_best = cPickle.load(open(RNS_MODEL_BEST_FILE))

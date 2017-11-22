@@ -17,9 +17,9 @@ class DIS():
         with tf.variable_scope('discriminator'):
             if param == None:
                 self.W_1 = tf.get_variable('weight_1', [self.feature_size, self.hidden_size],
-                                         initializer=tf.truncated_normal_initializer(mean=0.0, stddev=0.1))
+                                           initializer=tf.truncated_normal_initializer(mean=0.0, stddev=0.1))
                 self.W_2 = tf.get_variable('weight_2', [self.hidden_size, 1],
-                                         initializer=tf.truncated_normal_initializer(mean=0.0, stddev=0.1))
+                                           initializer=tf.truncated_normal_initializer(mean=0.0, stddev=0.1))
                 self.b = tf.get_variable('b', [self.hidden_size], initializer=tf.constant_initializer(0.0))
             else:
                 self.W_1 = tf.Variable(param[0])
@@ -35,15 +35,17 @@ class DIS():
         if loss == 'svm':
             # ranking svm loss
             with tf.name_scope('svm_loss'):
-                self.loss = tf.reduce_mean(tf.maximum(0.0, 1.0 - (pos_score - neg_score)))\
-                            + self.weight_decay * (tf.nn.l2_loss(self.W_1) + tf.nn.l2_loss(self.W_2) + tf.nn.l2_loss(self.b))
+                self.loss = tf.reduce_mean(tf.maximum(0.0, 1.0 - (pos_score - neg_score))) \
+                            + self.weight_decay * (
+                tf.nn.l2_loss(self.W_1) + tf.nn.l2_loss(self.W_2) + tf.nn.l2_loss(self.b))
                 # For generator
                 self.reward = tf.sigmoid(tf.maximum(0.0, 1.0 - (pos_score - neg_score)))
         elif loss == 'log':
             # ranking log loss
             with tf.name_scope('log_loss'):
-                self.loss = -tf.reduce_mean(tf.log(tf.sigmoid(pos_score - neg_score)))\
-                            + self.weight_decay * (tf.nn.l2_loss(self.W_1) + tf.nn.l2_loss(self.W_2) + tf.nn.l2_loss(self.b))
+                self.loss = -tf.reduce_mean(tf.log(tf.sigmoid(pos_score - neg_score))) \
+                            + self.weight_decay * (
+                tf.nn.l2_loss(self.W_1) + tf.nn.l2_loss(self.W_2) + tf.nn.l2_loss(self.b))
                 # For generator
                 self.reward = tf.reshape(tf.log(tf.sigmoid(neg_score - pos_score)), [-1])
         else:
@@ -55,7 +57,6 @@ class DIS():
 
         # Given batch query-url pairs, calculate the matching score
         self.pred_score = tf.matmul(tf.nn.tanh(tf.nn.xw_plus_b(self.pred_data, self.W_1, self.b)), self.W_2)
-
 
     def save_model(self, sess, filename):
         param = sess.run(self.d_params)

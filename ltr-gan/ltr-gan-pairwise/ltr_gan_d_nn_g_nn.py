@@ -8,7 +8,6 @@ import random
 from eval.precision import precision_at_k
 from eval.ndcg import ndcg_at_k
 
-
 FEATURE_SIZE = 46
 HIDDEN_SIZE = 46
 BATCH_SIZE = 8
@@ -23,11 +22,9 @@ DIS_MODEL_FILE_NN = workdir + '/dns_nn.model'
 
 GAN_MODEL_BEST_FILE = workdir + '/gan_best_nn.model'
 
-
 query_url_feature = ut.load_all_query_url_feature(workdir + '/Large_norm.txt', FEATURE_SIZE)
 query_pos_train = ut.get_query_pos(workdir + '/train.txt')
 query_pos_test = ut.get_query_pos(workdir + '/test.txt')
-
 
 '''
 If there are only two levels of relevance and for each "observed"
@@ -39,6 +36,8 @@ game Eq. (7) in the paper is bounded by the mathematical expectation of
 irrelevant document d_j, via a straightforward application of Jensen's
 inequality on the logarithm function.
 '''
+
+
 def generate_for_d(sess, model, filename):
     data = []
     print('negative sampling for d using g...')

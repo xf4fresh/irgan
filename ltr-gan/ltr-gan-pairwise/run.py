@@ -7,7 +7,6 @@ from eval.mrr import MRR
 from eval.precision import precision_at_k
 from eval.ndcg import ndcg_at_k
 
-
 FEATURE_SIZE = 46
 HIDDEN_SIZE = 46
 BATCH_SIZE = 8
@@ -17,11 +16,10 @@ D_LEARNING_RATE = 0.0001
 workdir = 'MQ2008-semi'
 GAN_PAIRWISE_MODEL_BEST_FILE = workdir + '/gan/gan_best_nn.model'
 
-query_url_feature =\
+query_url_feature = \
     ut.load_all_query_url_feature(workdir + '/Large_norm.txt', FEATURE_SIZE)
 query_pos_train = ut.get_query_pos(workdir + '/train.txt')
 query_pos_test = ut.get_query_pos(workdir + '/test.txt')
-
 
 param_best = cPickle.load(open(GAN_PAIRWISE_MODEL_BEST_FILE))
 assert param_best is not None
