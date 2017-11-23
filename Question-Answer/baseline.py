@@ -201,8 +201,7 @@ def main():
                 for i in range(FLAGS.num_epochs):
                     # x1,x2,x3=generate_dns(sess,discriminator)
                     # samples=generate_dns(sess,discriminator)#generate_uniform_pair() #generate_dns(sess,discriminator) #generate_uniform() #                        
-                    samples = generate_dns_pair(sess,
-                                                discriminator)  # generate_uniform() # generate_uniform_pair() #                     
+                    samples = generate_dns_pair(sess, discriminator)  # generate_uniform() # generate_uniform_pair() #
                     for j in range(1):
                         for batch in insurance_qa_data_helpers.batch_iter(samples, batch_size=FLAGS.batch_size,
                                                                           num_epochs=1,
@@ -220,7 +219,7 @@ def main():
                                  discriminator.accuracy],
                                 feed_dict)
                             time_str = datetime.datetime.now().isoformat()
-                            print(("%s: DIS step %d, loss %f with acc %f " % (time_str, step, current_loss, accuracy)))
+                            print("%s: DIS step %d, loss %f with acc %f " % (time_str, step, current_loss, accuracy))
 
                         evaluation(sess, discriminator, log, i)
 

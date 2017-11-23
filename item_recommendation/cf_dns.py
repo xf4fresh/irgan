@@ -76,6 +76,7 @@ def dcg_at_k(r, k):
     return np.sum(r / np.log2(np.arange(2, r.size + 2)))
 
 
+# Normalised Discounted Cumulative Gain
 def ndcg_at_k(r, k):
     dcg_max = dcg_at_k(sorted(r, reverse=True), k)
     if not dcg_max:
@@ -154,10 +155,10 @@ def generate_uniform(filename):
         fout.write('\n'.join(data))
 
 
+# Dynamic negative sampling
 def main():
     np.random.seed(70)
-    param = None
-    discriminator = DIS(ITEM_NUM, USER_NUM, EMB_DIM, lamda=0.1, param=param, initdelta=0.05, learning_rate=0.05)
+    discriminator = DIS(ITEM_NUM, USER_NUM, EMB_DIM, lamda=0.1, param=None, initdelta=0.05, learning_rate=0.05)
 
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
@@ -178,9 +179,9 @@ def main():
                 u = int(line[0])
                 i = int(line[1])
                 j = int(line[2])
-                _ = sess.run(discriminator.d_updates,
-                             feed_dict={discriminator.u: [u], discriminator.pos: [i],
-                                        discriminator.neg: [j]})
+                _ = sess.run(discriminator.d_updates, feed_dict={discriminator.u: [u],
+                                                                 discriminator.pos: [i],
+                                                                 discriminator.neg: [j]})
 
         result = simple_test(sess, discriminator)
         print "epoch ", epoch, "dis: ", result

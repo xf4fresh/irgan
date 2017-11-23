@@ -37,7 +37,7 @@ class DIS():
             with tf.name_scope('svm_loss'):
                 self.loss = tf.reduce_mean(tf.maximum(0.0, 1.0 - (pos_score - neg_score))) \
                             + self.weight_decay * (
-                tf.nn.l2_loss(self.W_1) + tf.nn.l2_loss(self.W_2) + tf.nn.l2_loss(self.b))
+                    tf.nn.l2_loss(self.W_1) + tf.nn.l2_loss(self.W_2) + tf.nn.l2_loss(self.b))
                 # For generator
                 self.reward = tf.sigmoid(tf.maximum(0.0, 1.0 - (pos_score - neg_score)))
         elif loss == 'log':
@@ -45,7 +45,7 @@ class DIS():
             with tf.name_scope('log_loss'):
                 self.loss = -tf.reduce_mean(tf.log(tf.sigmoid(pos_score - neg_score))) \
                             + self.weight_decay * (
-                tf.nn.l2_loss(self.W_1) + tf.nn.l2_loss(self.W_2) + tf.nn.l2_loss(self.b))
+                    tf.nn.l2_loss(self.W_1) + tf.nn.l2_loss(self.W_2) + tf.nn.l2_loss(self.b))
                 # For generator
                 self.reward = tf.reshape(tf.log(tf.sigmoid(neg_score - pos_score)), [-1])
         else:

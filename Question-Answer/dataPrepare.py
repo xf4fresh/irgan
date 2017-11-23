@@ -33,7 +33,7 @@ def convert2TSV(rawFilename):
             uncorrect_words = " ".join([vocabulary[w] for w in answers[sen]])
             line = "\t".join((q_words, uncorrect_words, "0"))
             lines.append(line)
-        # print lines
+            # print lines
 
     filename = "original/insurance_%s.tsv" % (rawFilename)
     with open(filename, "w") as f:

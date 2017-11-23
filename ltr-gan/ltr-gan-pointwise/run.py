@@ -16,15 +16,15 @@ TEMPERATURE = 0.2
 workdir = 'MQ2008-semi'
 GAN_MODEL_BEST_FILE = workdir + '/gan/gan_best_nn.model'
 
-query_url_feature, _, _ = \
-    ut.load_all_query_url_feature(workdir + '/Large_norm.txt', FEATURE_SIZE)
+query_url_feature, _, _ = ut.load_all_query_url_feature(workdir + '/Large_norm.txt', FEATURE_SIZE)
 query_pos_train = ut.get_query_pos(workdir + '/train.txt')
 query_pos_test = ut.get_query_pos(workdir + '/test.txt')
 
+# load model
 param_best = cPickle.load(open(GAN_MODEL_BEST_FILE))
 assert param_best is not None
-generator_best = GEN(FEATURE_SIZE, HIDDEN_SIZE, WEIGHT_DECAY, G_LEARNING_RATE, temperature=TEMPERATURE,
-                     param=param_best)
+generator_best = GEN(FEATURE_SIZE, HIDDEN_SIZE, WEIGHT_DECAY, G_LEARNING_RATE,
+                     temperature=TEMPERATURE, param=param_best)
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True

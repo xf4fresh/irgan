@@ -50,7 +50,7 @@ FLAGS._parse_flags()
 
 timeStamp = time.strftime("%Y%m%d%H%M%S", time.localtime(int(time.time())))
 
-print(("Loading data..."))
+print("Loading data...")
 
 vocab = insurance_qa_data_helpers.build_vocab()
 # embeddings =insurance_qa_data_helpers.load_vectors(vocab)
@@ -227,7 +227,7 @@ def main():
                                 feed_dict)
 
                             line = ("%s: DIS step %d, loss %f with acc %f " % (
-                            datetime.datetime.now().isoformat(), step, current_loss, accuracy))
+                                datetime.datetime.now().isoformat(), step, current_loss, accuracy))
                             if _index % 10 == 0:
                                 print(line)
                             loss_log.write(line + "\n")
@@ -251,7 +251,8 @@ def main():
                             samples = insurance_qa_data_helpers.loadCandidateSamples(q, a, pools, vocab)
                             predicteds = []
                             for batch in insurance_qa_data_helpers.batch_iter(samples, batch_size=FLAGS.batch_size):
-                                feed_dict = {generator.input_x_1: batch[:, 0], generator.input_x_2: batch[:, 1],
+                                feed_dict = {generator.input_x_1: batch[:, 0],
+                                             generator.input_x_2: batch[:, 1],
                                              generator.input_x_3: batch[:, 2]}
 
                                 predicted = sess.run(generator.gan_score, feed_dict)
@@ -287,7 +288,7 @@ def main():
                                 feed_dict)  # self.gan_loss = -tf.reduce_mean(tf.log(self.prob) * self.reward) 
 
                             line = ("%s: GEN step %d, loss %f  positive %f negative %f" % (
-                            datetime.datetime.now().isoformat(), step, current_loss, positive, negative))
+                                datetime.datetime.now().isoformat(), step, current_loss, positive, negative))
                             if _index % 100 == 0:
                                 print(line)
                             loss_log.write(line + "\n")

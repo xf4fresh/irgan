@@ -1,2 +1,5 @@
 *.pyc
 .idea
+
+*_log.txt
+dis-train.txt

@@ -17,7 +17,7 @@ class GEN:
         self.important_sampling = tf.placeholder(tf.float32, shape=[None], name='important_sampling')
 
         with tf.variable_scope('generator'):
-            if param == None:
+            if param is None:
                 self.W_1 = tf.get_variable('weight_1', [self.feature_size, self.hidden_size],
                                            initializer=tf.truncated_normal_initializer(mean=0.0, stddev=0.1))
                 self.W_2 = tf.get_variable('weight_2', [self.hidden_size, 1],

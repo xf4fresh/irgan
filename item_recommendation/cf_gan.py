@@ -177,9 +177,9 @@ def main():
                                                                                 train_size - index + 1)
                     index += BATCH_SIZE
 
-                    _ = sess.run(discriminator.d_updates,
-                                 feed_dict={discriminator.u: input_user, discriminator.i: input_item,
-                                            discriminator.label: input_label})
+                    _ = sess.run(discriminator.d_updates, feed_dict={discriminator.u: input_user,
+                                                                     discriminator.i: input_item,
+                                                                     discriminator.label: input_label})
 
             # Train G
             for g_epoch in range(50):  # 50
@@ -199,7 +199,8 @@ def main():
                     ###########################################################################
                     # Get reward and adapt it with importance sampling
                     ###########################################################################
-                    reward = sess.run(discriminator.reward, {discriminator.u: u, discriminator.i: sample})
+                    reward = sess.run(discriminator.reward, {discriminator.u: u,
+                                                             discriminator.i: sample})
                     reward = reward * prob[sample] / pn[sample]
                     ###########################################################################
                     # Update G
