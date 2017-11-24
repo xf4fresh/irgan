@@ -37,6 +37,20 @@ def MAP(sess, model, query_pos_test, query_pos_train, query_url_feature):
     return np.mean([average_precision(r) for r in rs])
 
 
+def new_MAP(sess, model, feature_list, label_list):
+    score_list = sess.run(model.pred_score, feed_dict={model.pred_data: np.asarray(feature_list, dtype='float32')})
+    pred_label_score = zip(label_list, score_list)
+    pred_label_score = sorted(pred_label_score, key=lambda x: x[1], reverse=True)
+
+    r = [0.0] * len(pred_label_score)
+    for i in range(0, len(pred_label_score)):
+        (label, score) = pred_label_score[i]
+        if int(label) == 1:
+            r[i] = 1.0
+
+    return average_precision(r)
+
+
 def MAP_user(sess, model, query_pos_test, query_pos_train, query_url_feature):
     rs = []
     query_test_list = sorted(query_pos_test.keys())

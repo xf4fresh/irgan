@@ -29,6 +29,20 @@ def precision_at_k(sess, model, query_pos_test, query_pos_train, query_url_featu
     return p / float(cnt)
 
 
+def new_precision_at_k(sess, model, feature_list, label_list, k=5):
+    score_list = sess.run(model.pred_score, feed_dict={model.pred_data: np.asarray(feature_list, dtype='float32')})
+    pred_label_score = zip(label_list, score_list)
+    pred_label_score = sorted(pred_label_score, key=lambda x: x[1], reverse=True)
+
+    num = 0.0
+    for (label, score) in pred_label_score[:k]:
+        if int(label) == 1:
+            num += 1.0
+    num /= (k * 1.0)
+
+    return num
+
+
 def precision_at_k_user(sess, model, query_pos_test, query_pos_train, query_url_feature, k=5):
     p_list = []
     query_test_list = sorted(query_pos_test.keys())

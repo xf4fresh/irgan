@@ -2,16 +2,16 @@ import cPickle
 import random
 import tensorflow as tf
 import numpy as np
-from eval.precision import precision_at_k
-from eval.ndcg import ndcg_at_k
-from eval.map import MAP
-from eval.mrr import MRR
+from eval.precision import precision_at_k, new_precision_at_k
+from eval.ndcg import ndcg_at_k, new_ndcg_at_k
+from eval.map import MAP, new_MAP
+from eval.mrr import MRR, new_MRR
 import utils as ut
 from dis_model_pairwise_nn import DIS
 
 FEATURE_SIZE = 46
 HIDDEN_SIZE = 46
-BATCH_SIZE = 8
+BATCH_SIZE = 32
 WEIGHT_DECAY = 0.01
 D_LEARNING_RATE = 0.0001
 
@@ -20,41 +20,59 @@ DNS_K = 15
 workdir = '/media/dxf/ICIRA2017/LNAI_10462-10464/MQ2008-semi'
 DIS_TRAIN_FILE = workdir + '/run-train-dns.txt'
 DNS_MODEL_BEST_FILE = workdir + '/dns_best_nn.model'
+dataset_path = workdir + '/dataset.npz'
 
-query_url_feature, _, _ = ut.load_all_query_url_feature(workdir + '/Large_norm.txt', FEATURE_SIZE)
-query_pos_train = ut.get_query_pos(workdir + '/train.txt')
-query_pos_test = ut.get_query_pos(workdir + '/test.txt')
+
+def create_dataset():
+    query_url_feature, _, _ = ut.load_all_query_url_feature(workdir + '/Large_norm.txt', FEATURE_SIZE)
+    query_pos_train = ut.get_query_pos(workdir + '/train.txt')
+    query_pos_test = ut.get_query_pos(workdir + '/test.txt')
+
+    # modify data
+    pos_feature = list()
+    neg_feature = list()
+    for query in query_url_feature.keys():
+
+        pos_url = list()
+        if query in query_pos_train:
+            pos_url.extend(query_pos_train[query])
+        if query in query_pos_test:
+            pos_url.extend(query_pos_test[query])
+
+        for url in query_url_feature[query].keys():
+            if url in pos_url:
+                pos_feature.append(query_url_feature[query][url])
+            else:
+                neg_feature.append(query_url_feature[query][url])
+
+    pos_arr = np.array(pos_feature, dtype='float32')
+    neg_arr = np.array(neg_feature, dtype='float32')
+    np.savez(dataset_path, pos_arr=pos_arr, neg_arr=neg_arr)
 
 
 def generate_dns(sess, model, filename):
     data = []
     print('dynamic negative sampling ...')
-    for query in query_pos_train:
-        pos_list = query_pos_train[query]
-        candidate_list = list(set(query_url_feature[query].keys()) - set(pos_list))
 
-        if len(candidate_list) <= 0:
-            continue
+    pos_count = pos_data.shape[0]
+    # neg_count = neg_data.shape[0]
 
-        candidate_list_feature = [query_url_feature[query][url] for url in candidate_list]
-        candidate_list_feature = np.asarray(candidate_list_feature)
-        candidate_list_score = sess.run(model.pred_score, feed_dict={model.pred_data: candidate_list_feature})
+    candidate_score = sess.run(model.pred_score, feed_dict={model.pred_data: neg_data})
 
-        neg_list = []
-        for i in range(len(pos_list)):
-            choice_index = np.random.choice(np.arange(len(candidate_list)), size=DNS_K)  # true or false
-            choice = np.array(candidate_list)[choice_index]
-            choice_score = np.array(candidate_list_score)[choice_index]
-            neg_list.append(choice[np.argmax(choice_score)])
+    neg_list = []
+    for i in range(pos_count):
+        choice_index = np.random.choice(np.arange(len(candidate_score)), size=DNS_K)  # true or false
+        choice_score = np.array(candidate_score)[choice_index]
+        neg_list.append(np.argmax(choice_score))
 
-        for i in range(len(pos_list)):
-            data.append((query, pos_list[i], neg_list[i]))
+    for i in range(pos_count):
+        data.append((i, neg_list[i]))
 
     random.shuffle(data)
     with open(filename, 'w') as fout:
-        for (q, pos, neg) in data:
-            fout.write(','.join([str(f) for f in query_url_feature[q][pos]]) + '\t'
-                       + ','.join([str(f) for f in query_url_feature[q][neg]]) + '\n')
+        for (pos, neg) in data:
+            fout.write(','.join([str(f) for f in pos_data[pos]]) + '\t'
+                       + ','.join([str(f) for f in neg_data[neg]]) + '\n')
             fout.flush()
 
 
@@ -64,7 +82,7 @@ def main():
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
-    sess.run(tf.initialize_all_variables())
+    sess.run(tf.global_variables_initializer())
 
     print('start dynamic negative sampling with log ranking discriminator')
     p_best_val = 0.0
@@ -73,6 +91,7 @@ def main():
     for epoch in range(200):
         generate_dns(sess, discriminator, DIS_TRAIN_FILE)
         train_size = ut.file_len(DIS_TRAIN_FILE)
+        # exit(0)
 
         index = 1
         while True:
@@ -90,8 +109,8 @@ def main():
             _ = sess.run(discriminator.d_updates, feed_dict={discriminator.pos_data: input_pos,
                                                              discriminator.neg_data: input_neg})
 
-        p_5 = precision_at_k(sess, discriminator, query_pos_test, query_pos_train, query_url_feature, k=5)
-        ndcg_5 = ndcg_at_k(sess, discriminator, query_pos_test, query_pos_train, query_url_feature, k=5)
+        p_5 = new_precision_at_k(sess, discriminator, test_features, test_labels, k=5)
+        ndcg_5 = new_ndcg_at_k(sess, discriminator, pos_test.shape[0], test_features, test_labels, k=5)
 
         if p_5 > p_best_val:
             p_best_val = p_5
@@ -109,20 +128,20 @@ def main():
     discriminator_best = DIS(FEATURE_SIZE, HIDDEN_SIZE, WEIGHT_DECAY, D_LEARNING_RATE, loss='log', param=param_best)
 
     sess = tf.Session(config=config)
-    sess.run(tf.initialize_all_variables())
+    sess.run(tf.global_variables_initializer())
 
-    p_1_best = precision_at_k(sess, discriminator_best, query_pos_test, query_pos_train, query_url_feature, k=1)
-    p_3_best = precision_at_k(sess, discriminator_best, query_pos_test, query_pos_train, query_url_feature, k=3)
-    p_5_best = precision_at_k(sess, discriminator_best, query_pos_test, query_pos_train, query_url_feature, k=5)
-    p_10_best = precision_at_k(sess, discriminator_best, query_pos_test, query_pos_train, query_url_feature, k=10)
+    p_1_best = new_precision_at_k(sess, discriminator_best, test_features, test_labels, k=1)
+    p_3_best = new_precision_at_k(sess, discriminator_best, test_features, test_labels, k=3)
+    p_5_best = new_precision_at_k(sess, discriminator_best, test_features, test_labels, k=5)
+    p_10_best = new_precision_at_k(sess, discriminator_best, test_features, test_labels, k=10)
 
-    ndcg_1_best = ndcg_at_k(sess, discriminator_best, query_pos_test, query_pos_train, query_url_feature, k=1)
-    ndcg_3_best = ndcg_at_k(sess, discriminator_best, query_pos_test, query_pos_train, query_url_feature, k=3)
-    ndcg_5_best = ndcg_at_k(sess, discriminator_best, query_pos_test, query_pos_train, query_url_feature, k=5)
-    ndcg_10_best = ndcg_at_k(sess, discriminator_best, query_pos_test, query_pos_train, query_url_feature, k=10)
+    ndcg_1_best = new_ndcg_at_k(sess, discriminator_best, pos_test.shape[0], test_features, test_labels, k=1)
+    ndcg_3_best = new_ndcg_at_k(sess, discriminator_best, pos_test.shape[0], test_features, test_labels, k=3)
+    ndcg_5_best = new_ndcg_at_k(sess, discriminator_best, pos_test.shape[0], test_features, test_labels, k=5)
+    ndcg_10_best = new_ndcg_at_k(sess, discriminator_best, pos_test.shape[0], test_features, test_labels, k=10)
 
-    map_best = MAP(sess, discriminator_best, query_pos_test, query_pos_train, query_url_feature)
-    mrr_best = MRR(sess, discriminator_best, query_pos_test, query_pos_train, query_url_feature)
+    map_best = new_MAP(sess, discriminator_best, test_features, test_labels,)
+    mrr_best = new_MRR(sess, discriminator_best, test_features, test_labels,)
 
     print("Best ", "p@1 ", p_1_best, "p@3 ", p_3_best, "p@5 ", p_5_best, "p@10 ", p_10_best)
     print("Best ", "ndcg@1 ", ndcg_1_best, "ndcg@3 ", ndcg_3_best, "ndcg@5 ", ndcg_5_best, "p@10 ", ndcg_10_best)
@@ -131,4 +150,21 @@ def main():
 
 
 if __name__ == '__main__':
+    if False:
+        create_dataset()
+        exit(0)
+
+    if True:
+        npz_file = np.load(dataset_path)
+        pos_data, neg_data = npz_file['pos_arr'], npz_file['neg_arr']
+        # np.random.shuffle(neg_data)
+        neg_data = neg_data[:pos_data.shape[0] * 300]
+        print pos_data.shape, neg_data.shape
+
+        from sklearn.model_selection import train_test_split
+        pos_train, pos_test = train_test_split(pos_data, random_state=2017, test_size=0.2)
+        neg_train, neg_test = train_test_split(neg_data, random_state=2017, test_size=0.2)
+        test_features = np.concatenate((pos_test, neg_test), axis=0)
+        test_labels = np.array([1] * pos_test.shape[0] + [0] * neg_test.shape[0])
+
     main()

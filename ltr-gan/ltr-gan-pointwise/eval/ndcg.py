@@ -30,6 +30,28 @@ def ndcg_at_k(sess, model, query_pos_test, query_pos_train, query_url_feature, k
     return ndcg / float(cnt)
 
 
+def new_ndcg_at_k(sess, model, pos_cnt, feature_list, label_list, k=5):
+    score_list = sess.run(model.pred_score, feed_dict={model.pred_data: np.asarray(feature_list, dtype='float32')})
+    pred_label_score = zip(label_list, score_list)
+    pred_label_score = sorted(pred_label_score, key=lambda x: x[1], reverse=True)
+
+    dcg = 0.0
+    for i in range(0, k):
+        (label, score) = pred_label_score[i]
+        if int(label) == 1:
+            dcg += (1 / np.log2(i + 2))
+
+    if pos_cnt < k:
+        n = pos_cnt
+    else:
+        n = k
+
+    idcg = np.sum(np.ones(n) / np.log2(np.arange(2, n + 2)))
+    ndcg = dcg / idcg
+
+    return ndcg
+
+
 def ndcg_at_k_user(sess, model, query_pos_test, query_pos_train, query_url_feature, k=5):
     ndcg_list = []
     query_test_list = sorted(query_pos_test.keys())
