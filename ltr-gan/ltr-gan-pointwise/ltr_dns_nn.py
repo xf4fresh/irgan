@@ -17,7 +17,7 @@ D_LEARNING_RATE = 0.0001
 
 DNS_K = 15
 
-workdir = 'MQ2008-semi'
+workdir = '/media/dxf/ICIRA2017/LNAI_10462-10464/MQ2008-semi'
 DIS_TRAIN_FILE = workdir + '/run-train-dns.txt'
 DNS_MODEL_BEST_FILE = workdir + '/dns_best_nn.model'
 
@@ -53,8 +53,7 @@ def generate_dns(sess, model, filename):
     random.shuffle(data)
     with open(filename, 'w') as fout:
         for (q, pos, neg) in data:
-            fout.write(','.join([str(f) for f in query_url_feature[q][pos]])
-                       + '\t'
+            fout.write(','.join([str(f) for f in query_url_feature[q][pos]]) + '\t'
                        + ','.join([str(f) for f in query_url_feature[q][neg]]) + '\n')
             fout.flush()
 
@@ -88,8 +87,8 @@ def main():
             input_pos = np.asarray(input_pos)
             input_neg = np.asarray(input_neg)
 
-            _ = sess.run(discriminator.d_updates,
-                         feed_dict={discriminator.pos_data: input_pos, discriminator.neg_data: input_neg})
+            _ = sess.run(discriminator.d_updates, feed_dict={discriminator.pos_data: input_pos,
+                                                             discriminator.neg_data: input_neg})
 
         p_5 = precision_at_k(sess, discriminator, query_pos_test, query_pos_train, query_url_feature, k=5)
         ndcg_5 = ndcg_at_k(sess, discriminator, query_pos_test, query_pos_train, query_url_feature, k=5)

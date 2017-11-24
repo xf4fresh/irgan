@@ -14,6 +14,14 @@ def load_all_query_url_feature(file, feature_size):
             feature = []
             for i in range(2, 2 + feature_size):
                 feature.append(float(cols[i].split(':')[1]))
+
+            # if max_query is None:
+            #     pass
+            # else:
+            #     if query == max_query:
+            #         pass
+            #     else:
+            #         continue
             if query in query_url_feature.keys():
                 query_url_feature[query][url] = feature
                 query_index_url[query].append(url)
@@ -38,6 +46,17 @@ def get_query_pos(file):
                     query_pos[query].append(url)
                 else:
                     query_pos[query] = [url]
+
+    # # find max query
+    # max_query = ''
+    # max_len = 0
+    # for query in query_pos:
+    #     print query, len(query_pos[query])
+    #     if len(query_pos[query]) > max_len:
+    #         max_len = len(query_pos[query])
+    #         max_query = query
+    # print "max_query:%s" % max_query
+
     return query_pos
 
 

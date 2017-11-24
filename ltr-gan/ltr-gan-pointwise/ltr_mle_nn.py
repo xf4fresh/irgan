@@ -39,8 +39,7 @@ def generate_uniform(filename):
     random.shuffle(data)
     with open(filename, 'w') as fout:
         for (q, pos, neg) in data:
-            fout.write(','.join([str(f) for f in query_url_feature[q][pos]])
-                       + '\t'
+            fout.write(','.join([str(f) for f in query_url_feature[q][pos]]) + '\t'
                        + ','.join([str(f) for f in query_url_feature[q][neg]]) + '\n')
             fout.flush()
 
@@ -80,9 +79,8 @@ def main():
             pred_data_label.extend([0.0] * len(input_neg))
             pred_data_label = np.asarray(pred_data_label)
 
-            _ = sess.run(discriminator.d_updates,
-                         feed_dict={discriminator.pred_data: pred_data,
-                                    discriminator.pred_data_label: pred_data_label})
+            _ = sess.run(discriminator.d_updates, feed_dict={discriminator.pred_data: pred_data,
+                                                             discriminator.pred_data_label: pred_data_label})
 
         p_5 = precision_at_k(sess, discriminator, query_pos_test, query_pos_train, query_url_feature, k=5)
         ndcg_5 = ndcg_at_k(sess, discriminator, query_pos_test, query_pos_train, query_url_feature, k=5)

@@ -38,7 +38,8 @@ class GEN:
         # For all urls of one query
         self.pred_score = tf.reshape(tf.nn.xw_plus_b(
             tf.nn.tanh(tf.nn.xw_plus_b(self.pred_data, self.W_1, self.b_1)), self.W_2, self.b_2),
-            [-1]) / self.temperature
+            [-1]
+        ) / self.temperature
 
         self.gan_prob = tf.gather(
             tf.reshape(tf.nn.softmax(tf.reshape(self.pred_score, [1, -1])), [-1]), self.sample_index)

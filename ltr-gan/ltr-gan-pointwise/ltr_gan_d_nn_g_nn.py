@@ -19,14 +19,19 @@ G_LEARNING_RATE = 0.001
 TEMPERATURE = 0.2
 LAMBDA = 0.5
 
-workdir = 'MQ2008-semi'
+workdir = '/media/dxf/ICIRA2017/LNAI_10462-10464/MQ2008-semi'
 DIS_TRAIN_FILE = workdir + '/run-train-gan.txt'
 GAN_MODEL_BEST_FILE = workdir + '/gan_best_nn.model'
 
-query_url_feature, query_url_index, query_index_url = \
-    ut.load_all_query_url_feature(workdir + '/Large_norm.txt', FEATURE_SIZE)
 query_pos_train = ut.get_query_pos(workdir + '/train.txt')
 query_pos_test = ut.get_query_pos(workdir + '/test.txt')
+
+# max_query = '10680'
+# query_pos_train = {max_query: query_pos_train[max_query]}
+# query_pos_test = {max_query: query_pos_test[max_query]}
+
+query_url_feature, query_url_index, query_index_url = \
+    ut.load_all_query_url_feature(workdir + '/Large_norm.txt', FEATURE_SIZE)
 
 
 def generate_for_d(sess, model, filename):
@@ -53,8 +58,7 @@ def generate_for_d(sess, model, filename):
     random.shuffle(data)
     with open(filename, 'w') as fout:
         for (q, pos, neg) in data:
-            fout.write(','.join([str(f) for f in query_url_feature[q][pos]])
-                       + '\t'
+            fout.write(','.join([str(f) for f in query_url_feature[q][pos]]) + '\t'
                        + ','.join([str(f) for f in query_url_feature[q][neg]]) + '\n')
             fout.flush()
 
@@ -74,36 +78,34 @@ def main():
     ndcg_best_val = 0.0
 
     for epoch in range(30):
-        if epoch >= 0:
-            # G generate negative for D, then train D
-            print('Training D ...')
-            for d_epoch in range(100):
-                if d_epoch % 30 == 0:
-                    generate_for_d(sess, generator, DIS_TRAIN_FILE)
-                    train_size = ut.file_len(DIS_TRAIN_FILE)
+        print('Training D ...')
+        for d_epoch in range(100):
+            if d_epoch % 30 == 0:
+                generate_for_d(sess, generator, DIS_TRAIN_FILE)  # G generate negative for D, then train D
+                train_size = ut.file_len(DIS_TRAIN_FILE)
 
-                index = 1
-                while True:
-                    if index > train_size:
-                        break
-                    if index + BATCH_SIZE <= train_size + 1:
-                        input_pos, input_neg = ut.get_batch_data(DIS_TRAIN_FILE, index, BATCH_SIZE)
-                    else:
-                        input_pos, input_neg = ut.get_batch_data(DIS_TRAIN_FILE, index, train_size - index + 1)
-                    index += BATCH_SIZE
+            index = 1
+            while True:
+                if index > train_size:
+                    break
+                if index + BATCH_SIZE <= train_size + 1:
+                    input_pos, input_neg = ut.get_batch_data(DIS_TRAIN_FILE, index, BATCH_SIZE)
+                else:
+                    input_pos, input_neg = ut.get_batch_data(DIS_TRAIN_FILE, index, train_size - index + 1)
+                index += BATCH_SIZE
 
-                    pred_data = []
-                    pred_data.extend(input_pos)
-                    pred_data.extend(input_neg)
-                    pred_data = np.asarray(pred_data)
+                pred_data = []
+                pred_data.extend(input_pos)
+                pred_data.extend(input_neg)
+                pred_data = np.asarray(pred_data)
 
-                    pred_data_label = [1.0] * len(input_pos)
-                    pred_data_label.extend([0.0] * len(input_neg))
-                    pred_data_label = np.asarray(pred_data_label)
+                pred_data_label = [1.0] * len(input_pos)
+                pred_data_label.extend([0.0] * len(input_neg))
+                pred_data_label = np.asarray(pred_data_label)
 
-                    _ = sess.run(discriminator.d_updates,
-                                 feed_dict={discriminator.pred_data: pred_data,
-                                            discriminator.pred_data_label: pred_data_label})
+                _ = sess.run(discriminator.d_updates, feed_dict={discriminator.pred_data: pred_data,
+                                                                 discriminator.pred_data_label: pred_data_label})
+
         # Train G
         print('Training G ...')
         for g_epoch in range(30):
@@ -143,6 +145,7 @@ def main():
                                         generator.reward: choose_reward,
                                         generator.important_sampling: choose_IS})
 
+            # test
             p_5 = precision_at_k(sess, generator, query_pos_test, query_pos_train, query_url_feature, k=5)
             ndcg_5 = ndcg_at_k(sess, generator, query_pos_test, query_pos_train, query_url_feature, k=5)
 
@@ -160,8 +163,9 @@ def main():
     sess.close()
     param_best = cPickle.load(open(GAN_MODEL_BEST_FILE))
     assert param_best is not None
-    generator_best = GEN(FEATURE_SIZE, HIDDEN_SIZE, WEIGHT_DECAY, G_LEARNING_RATE, temperature=TEMPERATURE,
-                         param=param_best)
+    generator_best = GEN(FEATURE_SIZE, HIDDEN_SIZE, WEIGHT_DECAY, G_LEARNING_RATE,
+                         temperature=TEMPERATURE, param=param_best)
+
     sess = tf.Session(config=config)
     sess.run(tf.initialize_all_variables())
 
