@@ -90,9 +90,9 @@ def main():
     with tf.device('/gpu:1') as graph_train:
         discriminator = DIS(FEATURE_SIZE, HIDDEN_SIZE, WEIGHT_DECAY, D_LEARNING_RATE, loss='log', param=None)
 
-        config = tf.ConfigProto()
-        config.gpu_options.allow_growth = True
-        sess = tf.Session(config=config)
+        sess = tf.Session(config=tf.ConfigProto(log_device_placement=True,
+                                                allow_soft_placement=True,
+                                                gpu_options=tf.GPUOptions(allow_growth=True)))
         sess.run(tf.global_variables_initializer())
 
         print('start dynamic negative sampling with log ranking discriminator')
