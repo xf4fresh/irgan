@@ -17,7 +17,8 @@ D_LEARNING_RATE = 0.0001
 
 DNS_K = 15
 
-workdir = '/media/dxf/ICIRA2017/LNAI_10462-10464/MQ2008-semi'
+# workdir = '/media/dxf/ICIRA2017/LNAI_10462-10464/MQ2008-semi'
+workdir = '/home/q/xiaofei.ding/github/MQ2008-semi'
 DIS_TRAIN_FILE = workdir + '/run-train-dns.txt'
 DNS_MODEL_BEST_FILE = workdir + '/dns_best_nn.model'
 dataset_path = workdir + '/dataset.npz'
@@ -85,76 +86,78 @@ def generate_dns(sess, model, filename):
 
 
 def main():
-    discriminator = DIS(FEATURE_SIZE, HIDDEN_SIZE, WEIGHT_DECAY, D_LEARNING_RATE, loss='log', param=None)
+    # with tf.Graph().as_default():
+    with tf.device('/gpu:1') as graph_train:
+        discriminator = DIS(FEATURE_SIZE, HIDDEN_SIZE, WEIGHT_DECAY, D_LEARNING_RATE, loss='log', param=None)
 
-    config = tf.ConfigProto()
-    config.gpu_options.allow_growth = True
-    sess = tf.Session(config=config)
-    sess.run(tf.global_variables_initializer())
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        sess = tf.Session(config=config)
+        sess.run(tf.global_variables_initializer())
 
-    print('start dynamic negative sampling with log ranking discriminator')
-    p_best_val = 0.0
-    ndcg_best_val = 0.0
+        print('start dynamic negative sampling with log ranking discriminator')
+        p_best_val = 0.0
+        ndcg_best_val = 0.0
 
-    for epoch in range(200):
-        generate_dns(sess, discriminator, DIS_TRAIN_FILE)
-        train_size = ut.file_len(DIS_TRAIN_FILE)
-        # exit(0)
+        for epoch in range(200):
+            generate_dns(sess, discriminator, DIS_TRAIN_FILE)
+            train_size = ut.file_len(DIS_TRAIN_FILE)
+            # exit(0)
 
-        index = 1
-        while True:
-            if index > train_size:
-                break
-            if index + BATCH_SIZE <= train_size + 1:
-                input_pos, input_neg = ut.get_batch_data(DIS_TRAIN_FILE, index, BATCH_SIZE)
-            else:
-                input_pos, input_neg = ut.get_batch_data(DIS_TRAIN_FILE, index, train_size - index + 1)
-            index += BATCH_SIZE
+            index = 1
+            while True:
+                if index > train_size:
+                    break
+                if index + BATCH_SIZE <= train_size + 1:
+                    input_pos, input_neg = ut.get_batch_data(DIS_TRAIN_FILE, index, BATCH_SIZE)
+                else:
+                    input_pos, input_neg = ut.get_batch_data(DIS_TRAIN_FILE, index, train_size - index + 1)
+                index += BATCH_SIZE
 
-            input_pos = np.asarray(input_pos)
-            input_neg = np.asarray(input_neg)
+                input_pos = np.asarray(input_pos)
+                input_neg = np.asarray(input_neg)
 
-            _ = sess.run(discriminator.d_updates, feed_dict={discriminator.pos_data: input_pos,
-                                                             discriminator.neg_data: input_neg})
+                _ = sess.run(discriminator.d_updates, feed_dict={discriminator.pos_data: input_pos,
+                                                                 discriminator.neg_data: input_neg})
 
-        p_5 = new_precision_at_k(sess, discriminator, test_features, test_labels, k=5)
-        ndcg_5 = new_ndcg_at_k(sess, discriminator, pos_test_data.shape[0], test_features, test_labels, k=5)
+            p_5 = new_precision_at_k(sess, discriminator, test_features, test_labels, k=5)
+            ndcg_5 = new_ndcg_at_k(sess, discriminator, pos_test_data.shape[0], test_features, test_labels, k=5)
 
-        if p_5 > p_best_val:
-            p_best_val = p_5
-            discriminator.save_model(sess, DNS_MODEL_BEST_FILE)
-            print("Best: ", " p@5 ", p_5, "ndcg@5 ", ndcg_5)
-        elif p_5 == p_best_val:
-            if ndcg_5 > ndcg_best_val:
-                ndcg_best_val = ndcg_5
+            if p_5 > p_best_val:
+                p_best_val = p_5
                 discriminator.save_model(sess, DNS_MODEL_BEST_FILE)
                 print("Best: ", " p@5 ", p_5, "ndcg@5 ", ndcg_5)
+            elif p_5 == p_best_val:
+                if ndcg_5 > ndcg_best_val:
+                    ndcg_best_val = ndcg_5
+                    discriminator.save_model(sess, DNS_MODEL_BEST_FILE)
+                    print("Best: ", " p@5 ", p_5, "ndcg@5 ", ndcg_5)
 
-    sess.close()
-    param_best = cPickle.load(open(DNS_MODEL_BEST_FILE))
-    assert param_best is not None
-    discriminator_best = DIS(FEATURE_SIZE, HIDDEN_SIZE, WEIGHT_DECAY, D_LEARNING_RATE, loss='log', param=param_best)
+        sess.close()
+        param_best = cPickle.load(open(DNS_MODEL_BEST_FILE))
+        assert param_best is not None
+        discriminator_best = DIS(FEATURE_SIZE, HIDDEN_SIZE, WEIGHT_DECAY, D_LEARNING_RATE, loss='log', param=param_best)
 
-    sess = tf.Session(config=config)
-    sess.run(tf.global_variables_initializer())
+        sess = tf.Session(config=config)
+        sess.run(tf.global_variables_initializer())
 
-    p_1_best = new_precision_at_k(sess, discriminator_best, test_features, test_labels, k=1)
-    p_3_best = new_precision_at_k(sess, discriminator_best, test_features, test_labels, k=3)
-    p_5_best = new_precision_at_k(sess, discriminator_best, test_features, test_labels, k=5)
-    p_10_best = new_precision_at_k(sess, discriminator_best, test_features, test_labels, k=10)
+        p_1_best = new_precision_at_k(sess, discriminator_best, test_features, test_labels, k=1)
+        p_3_best = new_precision_at_k(sess, discriminator_best, test_features, test_labels, k=3)
+        p_5_best = new_precision_at_k(sess, discriminator_best, test_features, test_labels, k=5)
+        p_10_best = new_precision_at_k(sess, discriminator_best, test_features, test_labels, k=10)
 
-    ndcg_1_best = new_ndcg_at_k(sess, discriminator_best, pos_test_data.shape[0], test_features, test_labels, k=1)
-    ndcg_3_best = new_ndcg_at_k(sess, discriminator_best, pos_test_data.shape[0], test_features, test_labels, k=3)
-    ndcg_5_best = new_ndcg_at_k(sess, discriminator_best, pos_test_data.shape[0], test_features, test_labels, k=5)
-    ndcg_10_best = new_ndcg_at_k(sess, discriminator_best, pos_test_data.shape[0], test_features, test_labels, k=10)
+        ndcg_1_best = new_ndcg_at_k(sess, discriminator_best, pos_test_data.shape[0], test_features, test_labels, k=1)
+        ndcg_3_best = new_ndcg_at_k(sess, discriminator_best, pos_test_data.shape[0], test_features, test_labels, k=3)
+        ndcg_5_best = new_ndcg_at_k(sess, discriminator_best, pos_test_data.shape[0], test_features, test_labels, k=5)
+        ndcg_10_best = new_ndcg_at_k(sess, discriminator_best, pos_test_data.shape[0], test_features, test_labels, k=10)
 
-    map_best = new_MAP(sess, discriminator_best, test_features, test_labels)
-    mrr_best = new_MRR(sess, discriminator_best, test_features, test_labels)
+        map_best = new_MAP(sess, discriminator_best, test_features, test_labels)
+        mrr_best = new_MRR(sess, discriminator_best, test_features, test_labels)
 
-    print("Best ", "p@1 ", p_1_best, "p@3 ", p_3_best, "p@5 ", p_5_best, "p@10 ", p_10_best)
-    print("Best ", "ndcg@1 ", ndcg_1_best, "ndcg@3 ", ndcg_3_best, "ndcg@5 ", ndcg_5_best, "p@10 ", ndcg_10_best)
-    print("Best MAP ", map_best)
-    print("Best MRR ", mrr_best)
+        print("Best ", "p@1 ", p_1_best, "p@3 ", p_3_best, "p@5 ", p_5_best, "p@10 ", p_10_best)
+        print("Best ", "ndcg@1 ", ndcg_1_best, "ndcg@3 ", ndcg_3_best, "ndcg@5 ", ndcg_5_best, "p@10 ", ndcg_10_best)
+        print("Best MAP ", map_best)
+        print("Best MRR ", mrr_best)
 
 
 if __name__ == '__main__':
