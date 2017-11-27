@@ -87,7 +87,7 @@ def generate_dns(sess, model, filename):
 
 def main():
     # with tf.Graph().as_default():
-    with tf.device('/gpu:1') as graph_train:
+    with tf.device('/device:GPU:1') as graph_train:
         discriminator = DIS(FEATURE_SIZE, HIDDEN_SIZE, WEIGHT_DECAY, D_LEARNING_RATE, loss='log', param=None)
 
         sess = tf.Session(config=tf.ConfigProto(log_device_placement=False,
@@ -163,7 +163,7 @@ def main():
 
 
 if __name__ == '__main__':
-    if True:
+    if False:
         create_dataset()
         exit(0)
 
