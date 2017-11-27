@@ -63,9 +63,6 @@ def generate_dns(sess, model, filename):
     data = []
     print('dynamic negative sampling ...')
 
-    pos_count = pos_train_data.shape[0]
-    # neg_count = neg_data.shape[0]
-
     candidate_score = sess.run(model.pred_score, feed_dict={model.pred_data: neg_data})
 
     neg_list = []
@@ -90,8 +87,7 @@ def main():
     with tf.device('/device:GPU:1') as graph_train:
         discriminator = DIS(FEATURE_SIZE, HIDDEN_SIZE, WEIGHT_DECAY, D_LEARNING_RATE, loss='log', param=None)
 
-        sess = tf.Session(config=tf.ConfigProto(log_device_placement=False,
-                                                allow_soft_placement=True,
+        sess = tf.Session(config=tf.ConfigProto(log_device_placement=False, allow_soft_placement=True,
                                                 gpu_options=tf.GPUOptions(allow_growth=True)))
         sess.run(tf.global_variables_initializer())
 
@@ -120,8 +116,8 @@ def main():
                 _ = sess.run(discriminator.d_updates, feed_dict={discriminator.pos_data: input_pos,
                                                                  discriminator.neg_data: input_neg})
 
-            p_5 = new_precision_at_k(sess, discriminator, test_features, test_labels, k=5)
-            ndcg_5 = new_ndcg_at_k(sess, discriminator, pos_test_data.shape[0], test_features, test_labels, k=5)
+            p_5 = new_precision_at_k(sess, discriminator, test_features, test_labels, k=5 * pos_count)
+            ndcg_5 = new_ndcg_at_k(sess, discriminator, pos_test_data.shape[0], test_features, test_labels, k=5*pos_count)
 
             if p_5 > p_best_val:
                 p_best_val = p_5
@@ -138,26 +134,25 @@ def main():
         assert param_best is not None
         discriminator_best = DIS(FEATURE_SIZE, HIDDEN_SIZE, WEIGHT_DECAY, D_LEARNING_RATE, loss='log', param=param_best)
 
-        sess = tf.Session(config=tf.ConfigProto(log_device_placement=False,
-                                                allow_soft_placement=True,
+        sess = tf.Session(config=tf.ConfigProto(log_device_placement=False, allow_soft_placement=True,
                                                 gpu_options=tf.GPUOptions(allow_growth=True)))
         sess.run(tf.global_variables_initializer())
 
-        p_1_best = new_precision_at_k(sess, discriminator_best, test_features, test_labels, k=1)
-        p_3_best = new_precision_at_k(sess, discriminator_best, test_features, test_labels, k=3)
-        p_5_best = new_precision_at_k(sess, discriminator_best, test_features, test_labels, k=5)
-        p_10_best = new_precision_at_k(sess, discriminator_best, test_features, test_labels, k=10)
+        # p_1_best = new_precision_at_k(sess, discriminator_best, test_features, test_labels, k=1)
+        p_3_best = new_precision_at_k(sess, discriminator_best, test_features, test_labels, k=3 * pos_count)
+        p_5_best = new_precision_at_k(sess, discriminator_best, test_features, test_labels, k=5 * pos_count)
+        p_10_best = new_precision_at_k(sess, discriminator_best, test_features, test_labels, k=10 * pos_count)
 
-        ndcg_1_best = new_ndcg_at_k(sess, discriminator_best, pos_test_data.shape[0], test_features, test_labels, k=1)
-        ndcg_3_best = new_ndcg_at_k(sess, discriminator_best, pos_test_data.shape[0], test_features, test_labels, k=3)
-        ndcg_5_best = new_ndcg_at_k(sess, discriminator_best, pos_test_data.shape[0], test_features, test_labels, k=5)
-        ndcg_10_best = new_ndcg_at_k(sess, discriminator_best, pos_test_data.shape[0], test_features, test_labels, k=10)
+        # ndcg_1_best = new_ndcg_at_k(sess, discriminator_best, pos_test_data.shape[0], test_features, test_labels, k=1)
+        ndcg_3_best = new_ndcg_at_k(sess, discriminator_best, pos_test_data.shape[0], test_features, test_labels, k=3 * pos_count)
+        ndcg_5_best = new_ndcg_at_k(sess, discriminator_best, pos_test_data.shape[0], test_features, test_labels, k=5 * pos_count)
+        ndcg_10_best = new_ndcg_at_k(sess, discriminator_best, pos_test_data.shape[0], test_features, test_labels, k=10 * pos_count)
 
         map_best = new_MAP(sess, discriminator_best, test_features, test_labels)
         mrr_best = new_MRR(sess, discriminator_best, test_features, test_labels)
 
-        print("Best ", "p@1 ", p_1_best, "p@3 ", p_3_best, "p@5 ", p_5_best, "p@10 ", p_10_best)
-        print("Best ", "ndcg@1 ", ndcg_1_best, "ndcg@3 ", ndcg_3_best, "ndcg@5 ", ndcg_5_best, "p@10 ", ndcg_10_best)
+        print("Best ", "p@3 ", p_3_best, "p@5 ", p_5_best, "p@10 ", p_10_best)
+        print("Best ", "ndcg@3 ", ndcg_3_best, "ndcg@5 ", ndcg_5_best, "p@10 ", ndcg_10_best)
         print("Best MAP ", map_best)
         print("Best MRR ", mrr_best)
 
@@ -179,5 +174,8 @@ if __name__ == '__main__':
         # neg_train, neg_test = train_test_split(neg_data, random_state=2017, test_size=0.2)
         test_features = np.concatenate((pos_test_data, neg_data), axis=0)
         test_labels = np.array([1] * pos_test_data.shape[0] + [0] * neg_data.shape[0])
+
+        pos_count = pos_train_data.shape[0]
+        neg_count = neg_data.shape[0]
 
         main()
