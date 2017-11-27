@@ -17,8 +17,8 @@ D_LEARNING_RATE = 0.0001
 
 DNS_K = 15
 
-# workdir = '/media/dxf/ICIRA2017/LNAI_10462-10464/MQ2008-semi'
-workdir = '/home/q/xiaofei.ding/github/MQ2008-semi'
+workdir = '/media/dxf/ICIRA2017/MQ2008-semi'
+# workdir = '/home/q/xiaofei.ding/github/MQ2008-semi'
 DIS_TRAIN_FILE = workdir + '/run-train-dns.txt'
 DNS_MODEL_BEST_FILE = workdir + '/dns_best_nn.model'
 dataset_path = workdir + '/dataset.npz'
@@ -90,7 +90,7 @@ def main():
     with tf.device('/gpu:1') as graph_train:
         discriminator = DIS(FEATURE_SIZE, HIDDEN_SIZE, WEIGHT_DECAY, D_LEARNING_RATE, loss='log', param=None)
 
-        sess = tf.Session(config=tf.ConfigProto(log_device_placement=True,
+        sess = tf.Session(config=tf.ConfigProto(log_device_placement=False,
                                                 allow_soft_placement=True,
                                                 gpu_options=tf.GPUOptions(allow_growth=True)))
         sess.run(tf.global_variables_initializer())
@@ -138,7 +138,9 @@ def main():
         assert param_best is not None
         discriminator_best = DIS(FEATURE_SIZE, HIDDEN_SIZE, WEIGHT_DECAY, D_LEARNING_RATE, loss='log', param=param_best)
 
-        sess = tf.Session(config=config)
+        sess = tf.Session(config=tf.ConfigProto(log_device_placement=False,
+                                                allow_soft_placement=True,
+                                                gpu_options=tf.GPUOptions(allow_growth=True)))
         sess.run(tf.global_variables_initializer())
 
         p_1_best = new_precision_at_k(sess, discriminator_best, test_features, test_labels, k=1)
@@ -161,7 +163,7 @@ def main():
 
 
 if __name__ == '__main__':
-    if False:
+    if True:
         create_dataset()
         exit(0)
 

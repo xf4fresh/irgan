@@ -15,3 +15,21 @@ http://www.bigdatalab.ac.cn/benchmark/bm/dd?data=MQ2008-semi
 [wiki-NDCG](https://en.wikipedia.org/wiki/Discounted_cumulative_gain#Normalized_DCG)
 
 [Optimizing Top-N Collaborative Filtering via Dynamic Negative Item Sampling](http://wnzhang.net/papers/lambdarankcf-sigir.pdf)
+
+
+tf Using GPUs 教程
+https://github.com/tensorflow/tensorflow/blob/master/tensorflow/docs_src/tutorials/using_gpu.md
+中文-http://wiki.jikexueyuan.com/project/tensorflow-zh/how_tos/using_gpu.html
+
+安装gpu版本
+pip install tensorflow-gpu
+
+sudo pip install --upgrade tensorflow-gpu -i  https://pypi.mirrors.ustc.edu.cn/simple/
+
+ImportError: libcudnn.so.6: cannot open shared object file: No such file or directory
+参考:
+https://www.tensorflow.org/install/install_linux#InstallingNativePip
+https://stackoverflow.com/questions/41991101/importerror-libcudnn-when-running-a-tensorflow-program
+https://gist.github.com/mjdietzx/0ff77af5ae60622ce6ed8c4d9b419f45
+
+sudo ldconfig -v |grep libcudnn.so.

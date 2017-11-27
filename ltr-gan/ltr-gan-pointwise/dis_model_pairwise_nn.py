@@ -14,7 +14,7 @@ class DIS():
         self.neg_data = tf.placeholder(tf.float32, shape=[None, self.feature_size], name="neg_data")
         self.pred_data = tf.placeholder(tf.float32, shape=[None, self.feature_size], name="pred_data")
 
-        with tf.device('/cpu:0'):
+        with tf.device('/gpu:1'):
             with tf.variable_scope('discriminator'):
                 if param is None:
                     self.W_1 = tf.get_variable('weight_1', [self.feature_size, self.hidden_size],
