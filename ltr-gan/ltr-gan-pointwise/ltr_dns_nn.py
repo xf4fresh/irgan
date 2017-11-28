@@ -17,6 +17,10 @@ D_LEARNING_RATE = 0.0001
 
 DNS_K = 15
 
+random.seed(2017)
+np.random.seed(2017)
+tf.set_random_seed(2017)
+
 workdir = '/media/dxf/ICIRA2017/MQ2008-semi'
 # workdir = '/home/q/xiaofei.ding/github/MQ2008-semi'
 DIS_TRAIN_FILE = workdir + '/run-train-dns.txt'
@@ -122,12 +126,12 @@ def main():
             if p_5 > p_best_val:
                 p_best_val = p_5
                 discriminator.save_model(sess, DNS_MODEL_BEST_FILE)
-                print("Best: ", " p@5 ", p_5, "ndcg@5 ", ndcg_5)
+                print "epoch:%d, Best: p@5 %.5f, ndcg@5 %.5f" % (epoch, p_5, ndcg_5)
             elif p_5 == p_best_val:
                 if ndcg_5 > ndcg_best_val:
                     ndcg_best_val = ndcg_5
                     discriminator.save_model(sess, DNS_MODEL_BEST_FILE)
-                    print("Best: ", " p@5 ", p_5, "ndcg@5 ", ndcg_5)
+                    print "epoch:%d, Best: p@5 %.5f, ndcg@5 %.5f" % (epoch, p_5, ndcg_5)
 
         sess.close()
         param_best = cPickle.load(open(DNS_MODEL_BEST_FILE))
